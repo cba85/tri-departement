@@ -1,5 +1,6 @@
-const CACHE_NAME = "tri-departemental-v1";
-const APP_SHELL = ["/", "/index.html", "/style.min.css", "/scripts.min.js", "/favicon.png", "/communes.json"];
+const CACHE_NAME = "tri-departemental-v2";
+const APP_SHELL = ["/", "/index.html", "/style.min.css", "/scripts.min.js", "/favicon.png", "moon.svg", "sun.svg"];
+const OPTIONAL_ASSETS = ["/communes.json"];
 
 function getNavigationCandidates(pathname) {
   if (pathname === "/") {
@@ -13,8 +14,18 @@ function getNavigationCandidates(pathname) {
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(APP_SHELL);
+    caches.open(CACHE_NAME).then(async (cache) => {
+      await cache.addAll(APP_SHELL);
+
+      await Promise.allSettled(
+        OPTIONAL_ASSETS.map(async (asset) => {
+          const response = await fetch(asset, { cache: "no-cache" });
+
+          if (response.ok) {
+            await cache.put(asset, response);
+          }
+        }),
+      );
     }),
   );
 
